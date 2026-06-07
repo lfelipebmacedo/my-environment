@@ -1,0 +1,48 @@
+---
+- name: Instalar dependências do backup (rclone, rsync)
+  ansible.builtin.apt:
+    name:
+      - rclone
+      - rsync
+    state: present
+  become: true
+  tags:
+    - obsidian-backup
+
+- name: Verificar se remote gdrive está configurado no rclone
+  ansible.builtin.command: rclone config show gdrive
+  register: rclone_gdrive_check
+  failed_when: false
+  changed_when: false
+  tags:
+    - obsidian-backup
+
+- name: Mostrar instrução para configurar rclone
+  ansible.builtin.debug:
+    msg: |
+      ⚠ rclone remote "gdrive" não configurado.
+      Execute manualmente: rclone config
+      Depois rode este playbook novamente.
+  when: rclone_gdrive_check.rc != 0
+  tags:
+    - obsidian-backup
+
+- name: Deploy script de backup do Obsidian
+  ansible.builtin.template:
+    src: backup-obsidian.sh.j2
+    dest: "{{ obsidian_backup_script_path | default(ansible_env.HOME + '/backup-obsidian.sh') }}"
+    mode: '0755'
+  when: rclone_gdrive_check.rc == 0
+  tags:
+    - obsidian-backup
+
+- name: Configurar cron diário para backup do Obsidian
+  ansible.builtin.cron:
+    name: "obsidian-backup"
+    job: "{{ obsidian_backup_script_path | default(ansible_env.HOME + '/backup-obsidian.sh') }}"
+    minute: "{{ obsidian_backup_cron_minute }}"
+    hour: "{{ obsidian_backup_cron_hour }}"
+    user: "{{ ansible_user_id }}"
+  when: rclone_gdrive_check.rc == 0
+  tags:
+    - obsidian-backup

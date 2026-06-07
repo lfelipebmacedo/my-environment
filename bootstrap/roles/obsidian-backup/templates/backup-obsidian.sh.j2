@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+LOGFILE="$HOME/backup-obsidian.log"
+VAULT="{{ obsidian_vault_path }}"
+REMOTE="{{ obsidian_backup_remote }}"
+
+echo "[$(date)] Iniciando backup do Obsidian..." >> "$LOGFILE"
+
+rclone sync "$VAULT" "$REMOTE" {% for pattern in obsidian_backup_exclude %}--exclude "{{ pattern }}" {% endfor %}--verbose >> "$LOGFILE" 2>&1
+
+echo "[$(date)] Backup concluído." >> "$LOGFILE"

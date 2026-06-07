@@ -10,5 +10,14 @@ kind_fallback_version: "v0.27.0"
 k9s_fallback_version: "v0.32.7"
 obsidian_fallback_version: "v1.8.10"
 
+# --- Obsidian backup (rclone + Google Drive) ---
+obsidian_vault_path: "~/Obsidian/Notebook"
+obsidian_backup_remote: "gdrive:obsidian-backup"
+obsidian_backup_cron_hour: "2"
+obsidian_backup_cron_minute: "0"
+obsidian_backup_exclude:
+  - ".obsidian/workspace.json"
+  - ".obsidian/workspace-mobile.json"
+
 # Flags de comportamento
 remove_firefox_snap: false

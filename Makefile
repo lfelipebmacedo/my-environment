@@ -1,7 +1,7 @@
 BOOTSTRAP_DIR := bootstrap
 PLAYBOOK      := $(BOOTSTRAP_DIR)/playbook.yml
 ANSIBLE_OPTS  := --ask-become-pass
-ROLES         := base gh warp firefox docker vscode obsidian intellij_toolbox kubectl kind k9s nvm sdkman
+ROLES         := base gh warp firefox docker vscode obsidian obsidian-backup intellij_toolbox kubectl kind k9s nvm sdkman
 
 .PHONY: bootstrap check dry-run lint roles vars
 

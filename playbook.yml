@@ -36,6 +36,7 @@
     - docker
     - vscode
     - obsidian
+    - obsidian-backup
     - intellij_toolbox
     - kubectl
     - kind

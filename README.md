@@ -50,6 +50,7 @@ de pacotes, repositórios, etc.).
 | `docker`          | Docker Engine + Compose      | repositório apt oficial         |
 | `vscode`          | Visual Studio Code           | repositório apt da Microsoft    |
 | `obsidian`        | Obsidian                     | `.deb` do GitHub releases       |
+| `obsidian-backup` | Backup diário do Obsidian p/ Google Drive | rclone + cron                |
 | `intellij_toolbox`| JetBrains Toolbox App        | tarball da API JetBrains        |
 | `kubectl`         | kubectl                      | repositório apt `pkgs.k8s.io`   |
 | `kind`            | kind                         | binário do GitHub releases      |
@@ -65,6 +66,12 @@ Edite `bootstrap/vars/main.yml` para ajustar versões e comportamentos:
 node_version: "lts"             # "lts" | "22" | "20.11.0"
 nvm_version: "latest"           # "latest" | "v0.40.3"
 docker_version: "latest"        # "latest" | "5:27.3.1-1~ubuntu.24.04~noble"
+
+# Backup do Obsidian (rclone + Google Drive)
+obsidian_vault_path: "~/Obsidian/Notebook"
+obsidian_backup_remote: "gdrive:obsidian-backup"
+obsidian_backup_cron_hour: "2"         # hora do backup (0-23)
+obsidian_backup_cron_minute: "0"       # minuto do backup
 
 remove_firefox_snap: false      # true = remove o Firefox Snap antes de instalar
 ```
@@ -99,6 +106,7 @@ make start-at TASK="firefox : garantir que o snap do firefox não está instalad
 - **kind**: `kind create cluster`
 - **k9s**: `k9s` (conecte-se a um cluster primeiro)
 - **Warp, Firefox, VSCode, Obsidian**: já aparecem no menu de aplicativos
+- **Obsidian backup**: configure o rclone (`rclone config`), depois rode `make obsidian-backup`
 
 ## Estrutura
 
@@ -114,7 +122,7 @@ make start-at TASK="firefox : garantir que o snap do firefox não está instalad
         ├── warp/            ├── docker/         ├── kubectl/
                              ├── vscode/         ├── kind/
                              ├── obsidian/       ├── k9s/
-                                                 ├── nvm/
+                             ├── obsidian-backup/├── nvm/
                                                  └── sdkman/
 ```
 
