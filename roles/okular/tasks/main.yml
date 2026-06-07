@@ -1,0 +1,6 @@
+---
+- name: Instalar Okular
+  ansible.builtin.apt:
+    name: okular
+    state: present
+  become: true

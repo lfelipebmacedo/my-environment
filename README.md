@@ -52,6 +52,7 @@ de pacotes, repositórios, etc.).
 | `obsidian`        | Obsidian                     | `.deb` do GitHub releases       |
 | `obsidian-backup` | Backup diário do Obsidian p/ Google Drive | rclone + cron                |
 | `intellij_toolbox`| JetBrains Toolbox App        | tarball da API JetBrains        |
+| `okular`          | Okular (leitor de PDFs)     | apt                             |
 | `kubectl`         | kubectl                      | repositório apt `pkgs.k8s.io`   |
 | `kind`            | kind                         | binário do GitHub releases      |
 | `k9s`             | k9s                          | tarball do GitHub releases      |
