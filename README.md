@@ -108,6 +108,54 @@ make start-at TASK="firefox : garantir que o snap do firefox não está instalad
 - **Warp, Firefox, VSCode, Obsidian**: já aparecem no menu de aplicativos
 - **Obsidian backup**: configure o rclone (`rclone config`), depois rode `make obsidian-backup`
 
+## Backup do Obsidian (obsidian-backup)
+
+A role `obsidian-backup` configura backup diário automático do seu vault
+Obsidian para o Google Drive usando **rclone** + **cron**.
+
+### Pré-requisito
+
+Antes de rodar a role, configure o rclone com sua conta Google:
+
+```bash
+rclone config
+```
+
+- `n` → new remote
+- Nome: `gdrive`
+- Tipo: `drive`
+- Deixe client_id e client_secret em branco (usa os defaults do rclone)
+- Scope: `1` (full access)
+- Demais opções: aperte Enter
+- `y` para auto config (abre o navegador para autenticar)
+
+### Configuração
+
+Edite `bootstrap/vars/main.yml` para ajustar o vault e horário:
+
+```yaml
+obsidian_vault_path: "~/Obsidian/Notebook"   # caminho do vault
+obsidian_backup_remote: "gdrive:obsidian-backup"  # destino no Google Drive
+obsidian_backup_cron_hour: "2"              # hora da execução (0-23)
+obsidian_backup_cron_minute: "0"            # minuto da execução
+```
+
+### Uso
+
+```bash
+# Instalar rclone + script + cron
+make obsidian-backup
+
+# Executar o backup manualmente
+~/backup-obsidian.sh
+
+# Ver log
+cat ~/backup-obsidian.log
+```
+
+O cron roda diariamente. O script usa `rclone sync`, mantendo o Google Drive
+como espelho do vault local (arquivos deletados localmente são removidos do backup).
+
 ## Estrutura
 
 ```
