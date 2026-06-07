@@ -1,0 +1,30 @@
+---
+- name: Verificar se GitHub CLI já está instalado
+  ansible.builtin.command: which gh
+  register: gh_check
+  failed_when: false
+  changed_when: false
+
+- name: Adicionar chave GPG do GitHub CLI
+  ansible.builtin.shell: |
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /etc/apt/keyrings/githubcli.gpg
+  args:
+    creates: /etc/apt/keyrings/githubcli.gpg
+  become: true
+  when: gh_check.rc != 0
+
+- name: Adicionar repositório apt do GitHub CLI
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ dpkg_arch }} signed-by=/etc/apt/keyrings/githubcli.gpg] https://cli.github.com/packages stable main"
+    state: present
+    filename: github-cli
+  become: true
+  when: gh_check.rc != 0
+
+- name: Instalar GitHub CLI
+  ansible.builtin.apt:
+    name: gh
+    state: present
+    update_cache: true
+  become: true
+  when: gh_check.rc != 0

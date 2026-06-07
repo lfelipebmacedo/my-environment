@@ -1,0 +1,43 @@
+---
+- name: Verificar se Obsidian já está instalado
+  ansible.builtin.command: which obsidian
+  register: obsidian_check
+  failed_when: false
+  changed_when: false
+
+- name: Buscar última versão do Obsidian no GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest
+    headers:
+      Accept: application/vnd.github.v3+json
+    return_content: true
+  register: obsidian_release
+  failed_when: false
+  when: obsidian_check.rc != 0
+
+- name: Definir tag do Obsidian
+  ansible.builtin.set_fact:
+    obsidian_tag: "{{ obsidian_release.json.tag_name | default(obsidian_fallback_version) }}"
+  when: obsidian_check.rc != 0
+
+- name: Baixar .deb do Obsidian
+  ansible.builtin.get_url:
+    url: "https://github.com/obsidianmd/obsidian-releases/releases/download/{{ obsidian_tag }}/obsidian_{{ obsidian_tag | regex_replace('^v', '') }}_{{ dpkg_arch }}.deb"
+    dest: /tmp/obsidian.deb
+    mode: '0644'
+  become: true
+  when: obsidian_check.rc != 0
+
+- name: Instalar Obsidian
+  ansible.builtin.apt:
+    deb: /tmp/obsidian.deb
+    state: present
+  become: true
+  when: obsidian_check.rc != 0
+
+- name: Remover .deb temporário
+  ansible.builtin.file:
+    path: /tmp/obsidian.deb
+    state: absent
+  become: true
+  when: obsidian_check.rc != 0

@@ -1,0 +1,42 @@
+---
+- name: Verificar se kubectl já está instalado
+  ansible.builtin.command: which kubectl
+  register: kubectl_check
+  failed_when: false
+  changed_when: false
+
+- name: Obter versão stable do Kubernetes
+  ansible.builtin.uri:
+    url: https://dl.k8s.io/release/stable.txt
+    return_content: true
+  register: kubectl_stable
+  when: kubectl_check.rc != 0
+
+- name: Definir minor version do Kubernetes
+  ansible.builtin.set_fact:
+    kubectl_minor: "{{ kubectl_stable.content | trim | regex_replace('^(v\\d+\\.\\d+).*$', '\\1') }}"
+  when: kubectl_check.rc != 0
+
+- name: Adicionar chave GPG do Kubernetes
+  ansible.builtin.shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes.gpg
+  become: true
+  when: kubectl_check.rc != 0
+
+- name: Adicionar repositório apt do Kubernetes
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor }}/deb/ /"
+    state: present
+    filename: kubernetes
+  become: true
+  when: kubectl_check.rc != 0
+
+- name: Instalar kubectl
+  ansible.builtin.apt:
+    name: kubectl
+    state: present
+    update_cache: true
+  become: true
+  when: kubectl_check.rc != 0

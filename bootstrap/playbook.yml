@@ -1,0 +1,53 @@
+---
+- name: Bootstrap dev machine
+  hosts: local
+  become: false
+  vars_files:
+    - vars/main.yml
+
+  pre_tasks:
+    - name: Verificar distro suportada
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution in ['Ubuntu', 'Debian']
+        fail_msg: "Apenas Ubuntu/Debian são suportados. Detectado: {{ ansible_distribution }}"
+
+    - name: Definir dpkg_arch
+      ansible.builtin.set_fact:
+        dpkg_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+
+    - name: Criar /etc/apt/keyrings
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      become: true
+
+  roles:
+    - base
+    - gh
+    - warp
+    - firefox
+    - docker
+    - vscode
+    - obsidian
+    - intellij_toolbox
+    - kubectl
+    - kind
+    - k9s
+    - nvm
+    - sdkman
+
+  post_tasks:
+    - name: Bootstrap concluído
+      ansible.builtin.debug:
+        msg: |
+          ✓ Bootstrap concluído! Próximos passos:
+            • Docker sem sudo : logout/login (ou 'newgrp docker'), depois: docker run hello-world
+            • Node/NVM        : abra um novo terminal e rode: node -v
+            • SDKMAN          : abra um novo terminal e rode: sdk version
+            • JetBrains Toolbox: execute ~/.local/share/JetBrains/Toolbox/bin/jetbrains-toolbox
+            • kubectl         : kubectl version --client
+            • kind            : kind create cluster
+            • k9s             : k9s (conecte a um cluster primeiro)
+            • Warp, Firefox, VSCode e Obsidian já estão no menu de aplicativos.

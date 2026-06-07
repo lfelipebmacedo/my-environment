@@ -1,0 +1,30 @@
+---
+- name: Verificar se Warp já está instalado
+  ansible.builtin.command: which warp-terminal
+  register: warp_check
+  failed_when: false
+  changed_when: false
+
+- name: Adicionar chave GPG do Warp
+  ansible.builtin.shell: |
+    curl -fsSL https://releases.warp.dev/linux/keys/warp.asc | gpg --dearmor -o /etc/apt/keyrings/warp.gpg
+  args:
+    creates: /etc/apt/keyrings/warp.gpg
+  become: true
+  when: warp_check.rc != 0
+
+- name: Adicionar repositório apt do Warp
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ dpkg_arch }} signed-by=/etc/apt/keyrings/warp.gpg] https://releases.warp.dev/linux/deb stable main"
+    state: present
+    filename: warp
+  become: true
+  when: warp_check.rc != 0
+
+- name: Instalar Warp Terminal
+  ansible.builtin.apt:
+    name: warp-terminal
+    state: present
+    update_cache: true
+  become: true
+  when: warp_check.rc != 0

@@ -1,0 +1,13 @@
+---
+- name: Verificar se SDKMAN já está instalado
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.sdkman/bin/sdkman-init.sh"
+  register: sdkman_stat
+
+- name: Instalar SDKMAN
+  ansible.builtin.shell: |
+    curl -s https://get.sdkman.io | bash
+  args:
+    creates: "{{ ansible_env.HOME }}/.sdkman/bin/sdkman-init.sh"
+    executable: /bin/bash
+  when: not sdkman_stat.stat.exists

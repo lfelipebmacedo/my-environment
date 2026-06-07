@@ -1,0 +1,14 @@
+---
+# Versões — altere aqui para fixar ou usar "latest"
+node_version: "lts"         # "lts" | "22" | "20.11.0"
+nvm_version: "latest"       # "latest" | "v0.40.3"
+nvm_fallback_version: "v0.40.3"
+
+docker_version: "latest"    # "latest" | "5:27.3.1-1~ubuntu.24.04~noble"
+
+kind_fallback_version: "v0.27.0"
+k9s_fallback_version: "v0.32.7"
+obsidian_fallback_version: "v1.8.10"
+
+# Flags de comportamento
+remove_firefox_snap: false

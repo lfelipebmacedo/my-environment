@@ -1,0 +1,29 @@
+---
+- name: Verificar se kind já está instalado
+  ansible.builtin.command: which kind
+  register: kind_check
+  failed_when: false
+  changed_when: false
+
+- name: Buscar última versão do kind no GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/kubernetes-sigs/kind/releases/latest
+    headers:
+      Accept: application/vnd.github.v3+json
+    return_content: true
+  register: kind_release
+  failed_when: false
+  when: kind_check.rc != 0
+
+- name: Definir tag do kind
+  ansible.builtin.set_fact:
+    kind_tag: "{{ kind_release.json.tag_name | default(kind_fallback_version) }}"
+  when: kind_check.rc != 0
+
+- name: Baixar binário do kind
+  ansible.builtin.get_url:
+    url: "https://github.com/kubernetes-sigs/kind/releases/download/{{ kind_tag }}/kind-linux-{{ dpkg_arch }}"
+    dest: /usr/local/bin/kind
+    mode: '0755'
+  become: true
+  when: kind_check.rc != 0

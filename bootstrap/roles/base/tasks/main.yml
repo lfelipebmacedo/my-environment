@@ -1,0 +1,13 @@
+---
+- name: Instalar pacotes base
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - wget
+      - gnupg
+      - apt-transport-https
+      - git
+    state: present
+    update_cache: true
+  become: true

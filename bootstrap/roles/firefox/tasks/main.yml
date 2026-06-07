@@ -1,0 +1,60 @@
+---
+- name: Verificar se source Mozilla já está configurada
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/mozilla.list
+  register: mozilla_list
+
+- name: Verificar se Firefox já está instalado
+  ansible.builtin.command: dpkg-query -W firefox
+  register: firefox_check
+  failed_when: false
+  changed_when: false
+
+- name: Remover sources Mozilla conflitantes
+  ansible.builtin.shell: |
+    grep -rl "packages.mozilla.org" /etc/apt/sources.list.d/ 2>/dev/null \
+      | grep -v "mozilla.list" | xargs rm -f || true
+    find /etc/apt/keyrings/ -name "*mozilla*" ! -name "mozilla.gpg" -delete 2>/dev/null || true
+  become: true
+  when: not mozilla_list.stat.exists
+
+- name: Adicionar chave GPG da Mozilla
+  ansible.builtin.shell: |
+    curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg | gpg --dearmor -o /etc/apt/keyrings/mozilla.gpg
+  args:
+    creates: /etc/apt/keyrings/mozilla.gpg
+  become: true
+  when: not mozilla_list.stat.exists
+
+- name: Adicionar repositório apt da Mozilla
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/mozilla.gpg] https://packages.mozilla.org/apt mozilla main"
+    state: present
+    filename: mozilla
+  become: true
+  when: not mozilla_list.stat.exists
+
+- name: Configurar pin para preferir .deb da Mozilla
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/mozilla
+    content: |
+      Package: *
+      Pin: origin packages.mozilla.org
+      Pin-Priority: 1000
+    mode: '0644'
+  become: true
+
+- name: Remover Firefox Snap
+  ansible.builtin.command: snap remove firefox
+  become: true
+  when: remove_firefox_snap | bool
+  failed_when: false
+  changed_when: true
+
+- name: Instalar Firefox
+  ansible.builtin.apt:
+    name: firefox
+    state: present
+    update_cache: true
+  become: true
+  when: firefox_check.rc != 0

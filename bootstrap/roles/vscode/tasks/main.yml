@@ -1,0 +1,30 @@
+---
+- name: Verificar se VSCode já está instalado
+  ansible.builtin.command: which code
+  register: vscode_check
+  failed_when: false
+  changed_when: false
+
+- name: Adicionar chave GPG da Microsoft
+  ansible.builtin.shell: |
+    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/keyrings/vscode.gpg
+  args:
+    creates: /etc/apt/keyrings/vscode.gpg
+  become: true
+  when: vscode_check.rc != 0
+
+- name: Adicionar repositório apt do VSCode
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ dpkg_arch }} signed-by=/etc/apt/keyrings/vscode.gpg] https://packages.microsoft.com/repos/code stable main"
+    state: present
+    filename: vscode
+  become: true
+  when: vscode_check.rc != 0
+
+- name: Instalar VSCode
+  ansible.builtin.apt:
+    name: code
+    state: present
+    update_cache: true
+  become: true
+  when: vscode_check.rc != 0

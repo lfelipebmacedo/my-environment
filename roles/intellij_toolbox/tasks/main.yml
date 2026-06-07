@@ -1,0 +1,33 @@
+---
+- name: Verificar se JetBrains Toolbox já está instalado
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.local/share/JetBrains/Toolbox/bin/jetbrains-toolbox"
+  register: toolbox_stat
+
+- name: Buscar URL de download do JetBrains Toolbox
+  ansible.builtin.uri:
+    url: https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release
+    return_content: true
+  register: toolbox_release
+  when: not toolbox_stat.stat.exists
+
+- name: Extrair URL do tarball
+  ansible.builtin.set_fact:
+    toolbox_url: "{{ toolbox_release.json.TBA[0].downloads.linux.link }}"
+  when: not toolbox_stat.stat.exists
+
+- name: Criar diretório de destino do Toolbox
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/share/JetBrains/Toolbox"
+    state: directory
+    mode: '0755'
+  when: not toolbox_stat.stat.exists
+
+- name: Baixar e extrair JetBrains Toolbox
+  ansible.builtin.unarchive:
+    src: "{{ toolbox_url }}"
+    dest: "{{ ansible_env.HOME }}/.local/share/JetBrains/Toolbox"
+    remote_src: true
+    extra_opts: [--strip-components=1]
+    creates: "{{ ansible_env.HOME }}/.local/share/JetBrains/Toolbox/bin/jetbrains-toolbox"
+  when: not toolbox_stat.stat.exists

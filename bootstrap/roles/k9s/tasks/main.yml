@@ -1,0 +1,32 @@
+---
+- name: Verificar se k9s já está instalado
+  ansible.builtin.command: which k9s
+  register: k9s_check
+  failed_when: false
+  changed_when: false
+
+- name: Buscar última versão do k9s no GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/derailed/k9s/releases/latest
+    headers:
+      Accept: application/vnd.github.v3+json
+    return_content: true
+  register: k9s_release
+  failed_when: false
+  when: k9s_check.rc != 0
+
+- name: Definir tag do k9s
+  ansible.builtin.set_fact:
+    k9s_tag: "{{ k9s_release.json.tag_name | default(k9s_fallback_version) }}"
+  when: k9s_check.rc != 0
+
+- name: Baixar e extrair k9s
+  ansible.builtin.unarchive:
+    src: "https://github.com/derailed/k9s/releases/download/{{ k9s_tag }}/k9s_Linux_{{ dpkg_arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    include:
+      - k9s
+    mode: '0755'
+  become: true
+  when: k9s_check.rc != 0

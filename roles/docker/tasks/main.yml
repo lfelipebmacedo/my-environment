@@ -1,0 +1,78 @@
+---
+- name: Verificar se Docker já está instalado
+  ansible.builtin.command: which docker
+  register: docker_check
+  failed_when: false
+  changed_when: false
+
+- name: Remover pacotes conflitantes do Docker
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - docker-compose-v2
+      - podman-docker
+      - containerd
+      - runc
+    state: absent
+  become: true
+  ignore_errors: true
+  when: docker_check.rc != 0
+
+- name: Adicionar chave GPG do Docker
+  ansible.builtin.shell: |
+    curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
+  become: true
+  when: docker_check.rc != 0
+
+- name: Adicionar repositório apt do Docker
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ dpkg_arch }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+  become: true
+  when: docker_check.rc != 0
+
+- name: Instalar Docker Engine (versão latest)
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+  become: true
+  when: docker_check.rc != 0 and docker_version == "latest"
+  notify: Habilitar e iniciar Docker
+
+- name: Instalar Docker Engine (versão fixada)
+  ansible.builtin.apt:
+    name:
+      - "docker-ce={{ docker_version }}"
+      - "docker-ce-cli={{ docker_version }}"
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+  become: true
+  when: docker_check.rc != 0 and docker_version != "latest"
+  notify: Habilitar e iniciar Docker
+
+- name: Garantir grupo docker existe
+  ansible.builtin.group:
+    name: docker
+    state: present
+  become: true
+
+- name: Adicionar usuário ao grupo docker
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: true
+  become: true
